@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Math Rush Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+font-family:Inter,sans-serif;
+background:linear-gradient(135deg,#071019,#0f172a,#052e16);
+color:#fff;height:100vh;display:flex;justify-content:center;align-items:center;
+}
+.card{
+width:390px;max-width:95vw;
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.12);
+border-radius:28px;padding:24px;
+box-shadow:0 20px 60px rgba(0,0,0,.4);
+animation:show .4s ease;
+}
+@keyframes show{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.hidden{display:none}
+.logo{font-size:32px;font-weight:800}
+.sub{opacity:.8;margin:8px 0 20px}
+.btn{
+width:100%;padding:14px;border:none;border-radius:14px;
+background:#22c55e;color:#fff;font-weight:700;cursor:pointer;
+transition:.2s;
+}
+.btn:hover{transform:translateY(-2px)}
+.stats{display:flex;justify-content:space-between;margin-bottom:12px}
+.progress{height:10px;background:#1e293b;border-radius:99px;overflow:hidden}
+.fill{height:100%;width:0;background:#22c55e;transition:.3s}
+.question{
+font-size:42px;font-weight:800;text-align:center;
+margin:28px 0;animation:pulse .8s;
+}
+@keyframes pulse{0%{transform:scale(.95)}100%{transform:scale(1)}}
+input{
+width:100%;padding:14px;border-radius:14px;border:none;
+font-size:22px;text-align:center;margin-bottom:12px;
+}
+.feedback{height:28px;text-align:center;font-weight:700}
+.good{color:#4ade80}.bad{color:#f87171}
+.rank{
+background:rgba(255,255,255,.06);
+padding:12px;border-radius:12px;margin-top:12px
+}
+</style>
+</head>
+<body>
+<div class="card">
+
+<div id="home">
+<div class="logo">⚡ Math Rush</div>
+<div class="sub">Desafio de cálculo mental com tempo e recordes.</div>
+
+<div class="rank">
+🏆 Melhor Tempo: <span id="record">Nenhum</span><br>
+🎯 Melhor Acerto: <span id="bestHits">0/10</span>
+</div>
+
+<br>
+<button class="btn" onclick="start()">JOGAR AGORA</button>
+</div>
+
+<div id="game" class="hidden">
+<div class="stats">
+<span>⏱️ <span id="time">0</span>s</span>
+<span>🎯 <span id="hits">0</span>/10</span>
+</div>
+
+<div class="progress"><div class="fill" id="fill"></div></div>
+
+<div style="margin-top:12px">Pergunta <span id="num">1</span>/10</div>
+
+<div class="question" id="q"></div>
+
+<input id="ans" type="number" placeholder="Digite sua resposta">
+
+<button class="btn" onclick="check()">Confirmar</button>
+
+<div class="feedback" id="fb"></div>
+</div>
+
+<div id="end" class="hidden">
+<h1>🎉 Resultado</h1><br>
+<p>⏱️ Tempo: <b id="finalTime"></b>s</p>
+<p>🎯 Acertos: <b id="finalHits"></b>/10</p>
+<p id="medal"></p><br>
+<div class="rank" id="msg"></div>
+<br>
+<button class="btn" onclick="location.reload()">Jogar Novamente</button>
+</div>
+
+</div>
+
+<script>
+let index=0,hits=0,correct=0,startTime;
+
+record.textContent=localStorage.getItem("mr_time")?.concat("s") || "Nenhum";
+bestHits.textContent=(localStorage.getItem("mr_hits") || "0") + "/10";
+
+function newQuestion(){
+const a=Math.floor(Math.random()*20)+1;
+const b=Math.floor(Math.random()*20)+1;
+const ops=["+","-","×","÷"];
+const op=ops[Math.floor(Math.random()*4)];
+
+if(op==="+") correct=a+b;
+if(op==="−"||op=="-") correct=a-b;
+if(op==="×") correct=a*b;
+if(op==="÷"){correct=a; q.textContent=`${a*b} ÷ ${b}`; return;}
+
+q.textContent=`${a} ${op} ${b}`;
+}
+
+function start(){
+home.classList.add("hidden");
+game.classList.remove("hidden");
+startTime=Date.now();
+
+setInterval(()=>{
+time.textContent=Math.floor((Date.now()-startTime)/1000);
+},100);
+
+newQuestion();
+}
+
+function check(){
+const value=Number(ans.value);
+
+if(value===correct){
+hits++;
+fb.className="feedback good";
+fb.textContent="✅ Correto!";
+}else{
+fb.className="feedback bad";
+fb.textContent="❌ Resposta correta: "+correct;
+}
+
+index++;
+hits.innerHTML=window.hits;
+num.textContent=Math.min(index+1,10);
+fill.style.width=(index*10)+"%";
+ans.value="";
+
+if(index>=10){finish();}
+else{newQuestion();}
+}
+
+function finish(){
+game.classList.add("hidden");
+end.classList.remove("hidden");
+
+const total=Math.floor((Date.now()-startTime)/1000);
+
+finalTime.textContent=total;
+finalHits.textContent=hits;
+
+if(hits===10) medal.innerHTML="🥇 Excelente desempenho!";
+else if(hits>=7) medal.innerHTML="🥈 Muito bom!";
+else medal.innerHTML="🥉 Continue praticando!";
+
+let bestTime=localStorage.getItem("mr_time");
+let bestHit=localStorage.getItem("mr_hits")||0;
+
+if(!bestTime || total < Number(bestTime)){
+localStorage.setItem("mr_time",total);
+msg.innerHTML="🏆 Novo recorde de tempo!";
+}
+
+if(hits > Number(bestHit)){
+localStorage.setItem("mr_hits",hits);
+msg.innerHTML += "<br>🎯 Novo recorde de acertos!";
+}
+}
+</script>
+</body>
+</html>
